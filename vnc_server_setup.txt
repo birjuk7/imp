@@ -1,0 +1,62 @@
+vncserver notes
+
+
+sudo apt-get update
+sudo apt-get install x11vnc
+x11vnc -storepasswd
+sudo x11vnc -auth guess -forever -loop -noxdamage -repeat -rfbauth /home/rahul/.vnc/passwd -rfbport 5900 -shared
+
+
+
+sudo ufw allow 5900/tcp        ## to allow the port used for vncviewer
+
+to start vnc server
+x11vnc -ncache 10 -auth guess -nap -forever -loop -repeat -rfbauth /root/.vnc/passwd -rfbport 5900
+
+lsof -i -P | grep vnc
+
+x11vnc -localhost -display :3 -auth .Xauthority
+
+sudo x11vnc -auth guess -forever -loop -noxdamage -repeat -rfbauth /home/exarb/.vnc/passwd -rfbport 5900 -shared       ## for more number of users
+sudo x11vnc -auth guess -shared -loop -noxdamage -repeat -rfbauth /home/exarb/.vnc/passwd -rfbport 5900 -shared       ## for more number of users
+
+start vncserver  $ x11vnc
+stop vncserver   $ x11vnc -R stop             or   killall x11vnc
+
+killall x11vnc && /usr/bin/x11vnc -rfbport 5900 -bg -vncconnect -xvnc -forever
+
+sudo iptables -I INPUT 1 -p tcp --dport 5900 -j ACCEPT     	  ###to allow port 5900 to accept vnc connection
+
+x11vnc                ### for one client at atime
+x11vnc -shared    ### for multiple clients at time
+x11vnc -once
+x11vnc -forever
+
+=============
+
+#!/bin/bash
+#install x11vnc & set password
+apt-get install x11vnc -y
+x11 -storepasswd 123456 /etc/x11vnc.pass
+#create config file for  system service
+cat > /lib/systemd/system/x11vnc.service <<-EOF
+[Unit]
+Description="x11vnc"
+Requires=display-manager.service
+After=display-manager.service
+
+[Service]
+ExecStart=/usr/bin/x11vnc -xkb -noxrecord -noxfixes -noxdamage -display :0 -auth guess -rfbauth /etc/x11vnc.pass
+ExecStop=/usr/bin/killall x11vnc
+
+
+[Install]
+WantedBy=multi-user.target
+EOF
+#restart new services &  enable on boot
+systemctl daemon-reload
+systemctl start x11vnc
+systemctl enable x11vnc
+
+
+
